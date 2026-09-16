@@ -121,7 +121,7 @@ class App(tk.Tk):
 
         today = date.today()
         dates = ttk.Frame(period, style="Card.TFrame")
-        dates.pack()
+        dates.pack(anchor=tk.W)
         self.from_row = DateRow(dates, date(today.year, 1, 1))
         self.from_row.pack(side=tk.LEFT)
         ttk.Label(dates, text="to", style="CardMuted.TLabel").pack(side=tk.LEFT, padx=14)
