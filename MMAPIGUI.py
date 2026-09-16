@@ -25,17 +25,36 @@ from core.history_client import (  # noqa: E402
 from core.kline_map import INTERVALS, csv_name, kltype_for  # noqa: E402
 from core.opend_status import opend_state  # noqa: E402
 from gui.period_widgets import DateRow  # noqa: E402
+from gui.theme import (  # noqa: E402
+    BAD,
+    BG,
+    BTN,
+    BTN_FG,
+    BTN_OFF,
+    BTN_OFF_FG,
+    LINE,
+    LOG_BG,
+    MONO,
+    MUTED,
+    OK,
+    TEXT,
+    SURFACE,
+    UI_FONT,
+    apply,
+)
 
 POLL_MS = 2000
 SAVES = ROOT / "saves"
+WIN_W, WIN_H = 720, 560
 
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Moomoo History Pull")
-        self.geometry("780x540")
-        self.minsize(640, 460)
+        self.title("Moomoo History")
+        self.geometry(f"{WIN_W}x{WIN_H}")
+        self.resizable(False, False)
+        apply(self)
 
         SAVES.mkdir(exist_ok=True)
 
@@ -48,88 +67,124 @@ class App(tk.Tk):
         self.after(120, self._drain_log)
         self.after(200, self._poll_opend)
 
+    def _card(self, parent) -> tk.Frame:
+        wrap = tk.Frame(parent, bg=SURFACE, highlightthickness=1, highlightbackground=LINE)
+        wrap.pack(fill=tk.X, padx=20, pady=(0, 10))
+        inner = ttk.Frame(wrap, style="Card.TFrame")
+        inner.pack(fill=tk.X, padx=14, pady=12)
+        return inner
+
     def _build(self) -> None:
-        pad = {"padx": 10, "pady": 6}
+        tk.Frame(self, bg=BG, height=18).pack(fill=tk.X)
 
-        status_row = ttk.Frame(self)
-        status_row.pack(fill=tk.X, **pad)
-        ttk.Label(status_row, text="OpenD").pack(side=tk.LEFT)
-        self.opend_dot = tk.Canvas(status_row, width=12, height=12, highlightthickness=0)
-        self.opend_dot.pack(side=tk.LEFT, padx=(8, 6))
-        self.opend_text = tk.StringVar(value="Checking OpenD.exe...")
-        ttk.Label(status_row, textvariable=self.opend_text).pack(side=tk.LEFT)
+        head = ttk.Frame(self)
+        head.pack(fill=tk.X, padx=20, pady=(0, 12))
+        ttk.Label(head, text="History pull").pack(anchor=tk.W)
+        ttk.Label(head, text=f"{HOST}:{PORT}   ·   saves/", style="Muted.TLabel").pack(anchor=tk.W)
 
-        top = ttk.Frame(self)
-        top.pack(fill=tk.X, **pad)
+        status = self._card(self)
+        row = ttk.Frame(status, style="Card.TFrame")
+        row.pack(fill=tk.X)
+        self.opend_dot = tk.Canvas(
+            row, width=10, height=10, bg=SURFACE, highlightthickness=0, bd=0
+        )
+        self.opend_dot.pack(side=tk.LEFT, pady=2)
+        self.opend_text = tk.StringVar(value="Checking OpenD…")
+        ttk.Label(row, textvariable=self.opend_text, style="CardMuted.TLabel").pack(
+            side=tk.LEFT, padx=8
+        )
 
-        ttk.Label(top, text="Symbol").pack(side=tk.LEFT)
+        fields = self._card(self)
+        line1 = ttk.Frame(fields, style="Card.TFrame")
+        line1.pack(fill=tk.X)
+        ttk.Label(line1, text="SYMBOL", style="CardMuted.TLabel").pack(side=tk.LEFT)
         self.symbol = tk.StringVar(value="US.MU")
-        ttk.Entry(top, textvariable=self.symbol, width=16).pack(side=tk.LEFT, padx=(6, 16))
-
-        ttk.Label(top, text="Interval").pack(side=tk.LEFT)
+        ttk.Entry(line1, textvariable=self.symbol, width=12).pack(side=tk.LEFT, padx=(8, 18))
+        ttk.Label(line1, text="INTERVAL", style="CardMuted.TLabel").pack(side=tk.LEFT)
         self.interval = tk.StringVar(value="15m")
         interval_box = ttk.Combobox(
-            top, textvariable=self.interval, values=INTERVALS, width=10, state="readonly"
+            line1, textvariable=self.interval, values=INTERVALS, width=8, state="readonly"
         )
-        interval_box.pack(side=tk.LEFT, padx=6)
+        interval_box.pack(side=tk.LEFT, padx=(8, 16))
         interval_box.bind("<<ComboboxSelected>>", self._on_interval)
-
         self.extended = tk.BooleanVar(value=False)
-        ttk.Checkbutton(top, text="US pre / after hours", variable=self.extended).pack(
-            side=tk.LEFT, padx=16
-        )
+        ttk.Checkbutton(line1, text="Pre / after hours", variable=self.extended).pack(side=tk.LEFT)
 
-        period = ttk.LabelFrame(self, text="Period  (from → to)")
-        period.pack(fill=tk.X, padx=10, pady=4)
-
+        period = self._card(self)
+        ttk.Label(period, text="PERIOD", style="CardMuted.TLabel").pack(anchor=tk.W, pady=(0, 8))
         today = date.today()
         self.from_row = DateRow(period, "From", date(today.year, 1, 1))
-        self.from_row.pack(anchor=tk.W, padx=8, pady=4)
+        self.from_row.pack(anchor=tk.W, pady=3)
         self.to_row = DateRow(period, "To", today)
-        self.to_row.pack(anchor=tk.W, padx=8, pady=4)
-
+        self.to_row.pack(anchor=tk.W, pady=3)
         self.period_hint = ttk.Label(
-            period, text="Day + month + year. API dates are YYYY-MM-DD."
+            period, text="Year · month · day", style="CardMuted.TLabel"
         )
-        self.period_hint.pack(anchor=tk.W, padx=8, pady=(0, 6))
+        self.period_hint.pack(anchor=tk.W, pady=(8, 0))
 
         actions = ttk.Frame(self)
-        actions.pack(fill=tk.X, **pad)
-        self.pull_btn = ttk.Button(actions, text="Pull", command=self._start_pull)
+        actions.pack(fill=tk.X, padx=20, pady=(2, 10))
+        self.pull_btn = tk.Button(
+            actions,
+            text="Pull",
+            command=self._start_pull,
+            font=UI_FONT,
+            bd=0,
+            padx=22,
+            pady=7,
+            cursor="hand2",
+            activebackground=BTN,
+            activeforeground=BTN_FG,
+        )
         self.pull_btn.pack(side=tk.LEFT)
-        ttk.Label(actions, text=f"API {HOST}:{PORT}   saves → {SAVES.name}/").pack(
-            side=tk.LEFT, padx=12
+        self.status = tk.StringVar(value="Waiting")
+        ttk.Label(actions, textvariable=self.status, style="Muted.TLabel").pack(
+            side=tk.LEFT, padx=14
         )
 
-        log_frame = ttk.LabelFrame(self, text="Log status")
-        log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 8))
+        log_wrap = tk.Frame(self, bg=LINE, highlightthickness=0)
+        log_wrap.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 8))
+        self.log = tk.Text(
+            log_wrap,
+            height=10,
+            wrap=tk.WORD,
+            state=tk.DISABLED,
+            bg=LOG_BG,
+            fg=MUTED,
+            insertbackground=TEXT,
+            bd=0,
+            highlightthickness=0,
+            font=MONO,
+            padx=12,
+            pady=10,
+        )
+        self.log.pack(fill=tk.BOTH, expand=True)
 
-        self.log = tk.Text(log_frame, height=14, wrap=tk.WORD, state=tk.DISABLED)
-        scroll = ttk.Scrollbar(log_frame, command=self.log.yview)
-        self.log.configure(yscrollcommand=scroll.set)
-        self.log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.status = tk.StringVar(value="Idle. Waiting for Pull.")
-        ttk.Label(self, textvariable=self.status, anchor=tk.W).pack(fill=tk.X, padx=10, pady=(0, 8))
-
-        self._log("Ready. CSVs go to saves/. Pull stays grey until OpenD is open.")
+        tk.Frame(self, bg=BG, height=12).pack(fill=tk.X)
+        self._log("Ready. Pull stays off until OpenD is open.")
 
     def _set_dot(self, ready: bool) -> None:
         self.opend_dot.delete("all")
-        color = "#2e7d32" if ready else "#c62828"
-        self.opend_dot.create_oval(2, 2, 10, 10, fill=color, outline=color)
+        color = OK if ready else BAD
+        self.opend_dot.create_oval(1, 1, 9, 9, fill=color, outline=color)
 
     def _refresh_pull_button(self) -> None:
         allow = self.opend_ready and not self.busy and not self.pull_locked
-        self.pull_btn.config(state=tk.NORMAL if allow else tk.DISABLED)
+        if allow:
+            self.pull_btn.config(
+                state=tk.NORMAL, bg=BTN, fg=BTN_FG, disabledforeground=BTN_OFF_FG
+            )
+        else:
+            self.pull_btn.config(
+                state=tk.DISABLED, bg=BTN_OFF, fg=BTN_OFF_FG, disabledforeground=BTN_OFF_FG
+            )
 
     def _poll_opend(self) -> None:
         ready, text = opend_state(HOST, PORT)
         self.opend_ready = ready
         self._set_dot(ready)
         if self.pull_locked:
-            self.opend_text.set("Pull locked after failure  •  restart app to try again")
+            self.opend_text.set("Locked after failure  ·  restart after fixing OpenD")
         else:
             self.opend_text.set(text)
         self._refresh_pull_button()
@@ -140,15 +195,13 @@ class App(tk.Tk):
         self.from_row.set_day_visible(not monthly)
         self.to_row.set_day_visible(not monthly)
         if monthly:
-            self.period_hint.config(
-                text="Monthly: pick month and year only. From = 1st of that month, To = last day."
-            )
+            self.period_hint.config(text="Monthly  ·  year and month only")
         else:
-            self.period_hint.config(text="Day + month + year. API dates are YYYY-MM-DD.")
+            self.period_hint.config(text="Year · month · day")
 
     def _log(self, msg: str) -> None:
         stamp = datetime.now().strftime("%H:%M:%S")
-        self.log_q.put(f"[{stamp}] {msg}")
+        self.log_q.put(f"{stamp}   {msg}")
 
     def _drain_log(self) -> None:
         try:
@@ -166,7 +219,7 @@ class App(tk.Tk):
         if self.busy or self.pull_locked:
             return
         if not self.opend_ready:
-            self.status.set("OpenD is not open. Pull is disabled.")
+            self.status.set("OpenD is not open")
             self._log("Blocked: OpenD.exe is not open")
             return
 
@@ -174,25 +227,25 @@ class App(tk.Tk):
         interval = self.interval.get()
         monthly = interval == "monthly"
         if not code or "." not in code:
-            self.status.set("Error: symbol must look like US.MU")
-            self._log("Rejected: symbol must be MARKET.CODE, e.g. US.MU")
+            self.status.set("Symbol must look like US.MU")
+            self._log("Rejected: symbol must be MARKET.CODE")
             return
         try:
             start = self.from_row.as_date(monthly, end_of_month=False)
             end = self.to_row.as_date(monthly, end_of_month=True)
         except ValueError as exc:
-            self.status.set(f"Error: {exc}")
+            self.status.set(str(exc))
             self._log(f"Rejected date: {exc}")
             return
         if start > end:
-            self.status.set("Error: From is after To")
+            self.status.set("From is after To")
             self._log("Rejected: From date is after To date")
             return
 
         self.busy = True
         self._refresh_pull_button()
-        self.status.set("Connecting to OpenD...")
-        self._log(f"Pull start  {code}  {interval}  {start} -> {end}")
+        self.status.set("Connecting…")
+        self._log(f"Pull  {code}  {interval}  {start} → {end}")
         threading.Thread(
             target=self._pull_worker,
             args=(code, interval, start.isoformat(), end.isoformat(), self.extended.get()),
@@ -203,18 +256,18 @@ class App(tk.Tk):
         self.pull_locked = True
         self.busy = False
         self._refresh_pull_button()
-        self.status.set("Failed. Pull locked. Restart the app after fixing OpenD / login.")
+        self.status.set("Failed  ·  restart after OpenD / login")
         self._log(f"Failed (no retry): {err}")
-        self._log(LOGIN_PROMPT.replace("\n", " | "))
+        self._log(LOGIN_PROMPT.replace("\n", "  ·  "))
         self.after(0, lambda: messagebox.showerror("OpenD / login", LOGIN_PROMPT + f"\n\n{err}"))
 
     def _pull_worker(self, code: str, interval: str, start: str, end: str, extended: bool) -> None:
         try:
             ktype = kltype_for(interval)
-            self._log(f"KLType mapped to {ktype}")
+            self._log(f"KLType {ktype}")
             out_path = SAVES / csv_name(code, interval)
             n = pull_history(code, start, end, ktype, extended, out_path, self._log)
-            self.status.set(f"Done: {n} bars -> saves/{out_path.name}" if n else "Done: 0 bars")
+            self.status.set(f"{n} bars  ·  saves/{out_path.name}" if n else "0 bars")
             self.busy = False
         except OpenDSessionError as exc:
             self._lock_after_failure(str(exc))
@@ -225,7 +278,7 @@ class App(tk.Tk):
                 self._lock_after_failure(hint)
                 return
             self._log(f"Failed: {type(exc).__name__}: {exc}")
-            self.status.set(f"Failed: {exc}")
+            self.status.set(str(exc))
             self.busy = False
 
 
