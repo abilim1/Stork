@@ -1,4 +1,4 @@
-"""Moomoo history pull GUI."""
+"""Stork — stock price history GUI."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ WIN_W, WIN_H = 720, 560
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Moomoo History")
+        self.title("Stork")
         self.geometry(f"{WIN_W}x{WIN_H}")
         self.resizable(False, False)
         apply(self)
@@ -79,8 +79,8 @@ class App(tk.Tk):
 
         head = ttk.Frame(self)
         head.pack(fill=tk.X, padx=20, pady=(0, 12))
-        ttk.Label(head, text="History pull").pack(anchor=tk.W)
-        ttk.Label(head, text=f"{HOST}:{PORT}   ·   saves/", style="Muted.TLabel").pack(anchor=tk.W)
+        ttk.Label(head, text="Stork").pack(anchor=tk.W)
+        ttk.Label(head, text="Stock price history", style="Muted.TLabel").pack(anchor=tk.W)
 
         status = self._card(self)
         row = ttk.Frame(status, style="Card.TFrame")
