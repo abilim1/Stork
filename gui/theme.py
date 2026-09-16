@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 import tkinter as tk
 from tkinter import ttk
 
@@ -21,9 +20,11 @@ BTN_OFF = "#2A303A"
 BTN_OFF_FG = "#6B7280"
 LOG_BG = "#0C0E12"
 
-UI_FONT = ("Segoe UI", 10) if sys.platform.startswith("win") else ("sans-serif", 10)
-UI_FONT_SM = ("Segoe UI", 9) if sys.platform.startswith("win") else ("sans-serif", 9)
-MONO = ("Cascadia Mono", 9) if sys.platform.startswith("win") else ("monospace", 9)
+UI_FONT = ("Helvetica", 10)
+UI_FONT_SM = ("Helvetica", 9)
+UI_FONT_BOLD = ("Helvetica", 10, "bold")
+UI_FONT_TITLE = ("Helvetica", 16, "bold")
+MONO = ("Helvetica", 9)
 
 
 def apply(root: tk.Tk) -> ttk.Style:
@@ -39,8 +40,11 @@ def apply(root: tk.Tk) -> ttk.Style:
     style.configure("TFrame", background=BG)
     style.configure("Card.TFrame", background=SURFACE)
     style.configure("TLabel", background=BG, foreground=TEXT, font=UI_FONT)
+    style.configure("Title.TLabel", background=BG, foreground=TEXT, font=UI_FONT_TITLE)
     style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=UI_FONT_SM)
+    style.configure("Bold.TLabel", background=BG, foreground=TEXT, font=UI_FONT_BOLD)
     style.configure("Card.TLabel", background=SURFACE, foreground=TEXT, font=UI_FONT)
+    style.configure("CardBold.TLabel", background=SURFACE, foreground=TEXT, font=UI_FONT_BOLD)
     style.configure("CardMuted.TLabel", background=SURFACE, foreground=MUTED, font=UI_FONT_SM)
     style.configure(
         "TEntry",
@@ -71,12 +75,12 @@ def apply(root: tk.Tk) -> ttk.Style:
     )
     style.configure(
         "TCheckbutton",
-        background=BG,
+        background=SURFACE,
         foreground=MUTED,
         font=UI_FONT_SM,
         indicatorcolor=CARD,
     )
-    style.map("TCheckbutton", background=[("active", BG)], foreground=[("active", TEXT)])
+    style.map("TCheckbutton", background=[("active", SURFACE)], foreground=[("active", TEXT)])
     root.option_add("*TCombobox*Listbox.background", CARD)
     root.option_add("*TCombobox*Listbox.foreground", TEXT)
     root.option_add("*TCombobox*Listbox.selectBackground", LINE)

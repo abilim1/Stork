@@ -1,4 +1,4 @@
-"""From / To date row. Hides day when interval is monthly."""
+"""Start / end date row. Hides day when interval is monthly."""
 
 from __future__ import annotations
 
@@ -9,10 +9,8 @@ from tkinter import ttk
 
 
 class DateRow(ttk.Frame):
-    def __init__(self, master, label: str, initial: date, card: bool = True):
+    def __init__(self, master, initial: date, card: bool = True):
         super().__init__(master, style="Card.TFrame" if card else "TFrame")
-        lbl_style = "CardMuted.TLabel" if card else "Muted.TLabel"
-        ttk.Label(self, text=label.upper(), width=5, style=lbl_style).pack(side=tk.LEFT)
         self.year = tk.StringVar(value=str(initial.year))
         self.month = tk.StringVar(value=f"{initial.month:02d}")
         self.day = tk.StringVar(value=f"{initial.day:02d}")
@@ -22,7 +20,7 @@ class DateRow(ttk.Frame):
         days = [f"{d:02d}" for d in range(1, 32)]
 
         ttk.Combobox(self, textvariable=self.year, values=years, width=5, state="readonly").pack(
-            side=tk.LEFT, padx=(8, 4)
+            side=tk.LEFT, padx=(0, 4)
         )
         ttk.Combobox(self, textvariable=self.month, values=months, width=3, state="readonly").pack(
             side=tk.LEFT, padx=4
