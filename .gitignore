@@ -1,5 +1,6 @@
 # Data dumps
 *.csv
+saves/
 __pycache__/
 *.pyc
 
