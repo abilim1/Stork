@@ -112,13 +112,21 @@ def pull_history(
         if "time_key" in out.columns:
             out = out.drop_duplicates(subset=["time_key"], keep="last")
             out = out.sort_values("time_key").reset_index(drop=True)
+            ts = pd.to_datetime(out["time_key"], errors="coerce")
+            out.insert(0, "Date", ts.dt.strftime("%Y-%m-%d"))
+            out.insert(1, "Time", ts.dt.strftime("%H:%M:%S"))
+            out = out.drop(columns=["time_key"])
+            log("Split time_key into Date and Time")
         drop_cols = [c for c in DROP_COLS if c in out.columns]
         if drop_cols:
             out = out.drop(columns=drop_cols)
             log(f"Dropped columns: {', '.join(drop_cols)}")
         out.to_csv(out_path, index=False)
-        first = out["time_key"].iloc[0] if "time_key" in out.columns else "?"
-        last = out["time_key"].iloc[-1] if "time_key" in out.columns else "?"
+        if "Date" in out.columns and "Time" in out.columns:
+            first = f"{out['Date'].iloc[0]} {out['Time'].iloc[0]}"
+            last = f"{out['Date'].iloc[-1]} {out['Time'].iloc[-1]}"
+        else:
+            first = last = "?"
         log(f"Saved {len(out)} bars -> {out_path.name}")
         log(f"Range {first} -> {last}")
 

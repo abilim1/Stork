@@ -27,6 +27,9 @@ while True:
 
 df = pd.concat(pages, ignore_index=True)
 df = df.drop_duplicates(subset=["time_key"]).sort_values("time_key")
-df = df.drop(columns=['pe_ratio', 'turnover_rate'])
+ts = pd.to_datetime(df["time_key"], errors="coerce")
+df.insert(0, "Date", ts.dt.strftime("%Y-%m-%d"))
+df.insert(1, "Time", ts.dt.strftime("%H:%M:%S"))
+df = df.drop(columns=["time_key", "pe_ratio", "turnover_rate"], errors="ignore")
 df.to_csv("MU15m2026.csv", index=False)
 quote_ctx.close()
