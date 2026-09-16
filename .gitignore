@@ -1,3 +1,8 @@
+# Data dumps
 *.csv
+__pycache__/
+*.pyc
+
+# Moomoo / Futu local gateway client
 OpenDClient/
 **/OpenDClient/
