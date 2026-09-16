@@ -79,7 +79,7 @@ class App(tk.Tk):
 
         head = ttk.Frame(self)
         head.pack(fill=tk.X, padx=20, pady=(0, 12))
-        ttk.Label(head, text="Stork").pack(anchor=tk.W)
+        ttk.Label(head, text="Stork", style="Title.TLabel").pack(anchor=tk.W)
         ttk.Label(head, text="Stock price history", style="Muted.TLabel").pack(anchor=tk.W)
 
         status = self._card(self)
@@ -97,10 +97,10 @@ class App(tk.Tk):
         fields = self._card(self)
         line1 = ttk.Frame(fields, style="Card.TFrame")
         line1.pack(fill=tk.X)
-        ttk.Label(line1, text="SYMBOL", style="CardMuted.TLabel").pack(side=tk.LEFT)
+        ttk.Label(line1, text="Symbol", style="CardBold.TLabel").pack(side=tk.LEFT)
         self.symbol = tk.StringVar(value="US.MU")
         ttk.Entry(line1, textvariable=self.symbol, width=12).pack(side=tk.LEFT, padx=(8, 18))
-        ttk.Label(line1, text="INTERVAL", style="CardMuted.TLabel").pack(side=tk.LEFT)
+        ttk.Label(line1, text="Interval", style="CardBold.TLabel").pack(side=tk.LEFT)
         self.interval = tk.StringVar(value="15m")
         interval_box = ttk.Combobox(
             line1, textvariable=self.interval, values=INTERVALS, width=8, state="readonly"
@@ -111,16 +111,22 @@ class App(tk.Tk):
         ttk.Checkbutton(line1, text="Pre / after hours", variable=self.extended).pack(side=tk.LEFT)
 
         period = self._card(self)
-        ttk.Label(period, text="PERIOD", style="CardMuted.TLabel").pack(anchor=tk.W, pady=(0, 8))
-        today = date.today()
-        self.from_row = DateRow(period, "From", date(today.year, 1, 1))
-        self.from_row.pack(anchor=tk.W, pady=3)
-        self.to_row = DateRow(period, "To", today)
-        self.to_row.pack(anchor=tk.W, pady=3)
+        period_head = ttk.Frame(period, style="Card.TFrame")
+        period_head.pack(fill=tk.X, pady=(0, 8))
+        ttk.Label(period_head, text="Period", style="CardBold.TLabel").pack(side=tk.LEFT)
         self.period_hint = ttk.Label(
-            period, text="Year · month · day", style="CardMuted.TLabel"
+            period_head, text="Year month day", style="CardMuted.TLabel"
         )
-        self.period_hint.pack(anchor=tk.W, pady=(8, 0))
+        self.period_hint.pack(side=tk.LEFT, padx=10)
+
+        today = date.today()
+        dates = ttk.Frame(period, style="Card.TFrame")
+        dates.pack()
+        self.from_row = DateRow(dates, date(today.year, 1, 1))
+        self.from_row.pack(side=tk.LEFT)
+        ttk.Label(dates, text="to", style="CardMuted.TLabel").pack(side=tk.LEFT, padx=14)
+        self.to_row = DateRow(dates, today)
+        self.to_row.pack(side=tk.LEFT)
 
         actions = ttk.Frame(self)
         actions.pack(fill=tk.X, padx=20, pady=(2, 10))
@@ -195,9 +201,9 @@ class App(tk.Tk):
         self.from_row.set_day_visible(not monthly)
         self.to_row.set_day_visible(not monthly)
         if monthly:
-            self.period_hint.config(text="Monthly  ·  year and month only")
+            self.period_hint.config(text="Year month")
         else:
-            self.period_hint.config(text="Year · month · day")
+            self.period_hint.config(text="Year month day")
 
     def _log(self, msg: str) -> None:
         stamp = datetime.now().strftime("%H:%M:%S")
