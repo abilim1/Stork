@@ -1,20 +1,33 @@
-"""Moomoo history pull GUI. OpenD.exe status is polled live."""
+"""Moomoo history pull GUI."""
 
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import tkinter as tk
 from datetime import date, datetime
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
-from history_client import HOST, PORT, pull_history
-from kline_map import INTERVALS, csv_name, kltype_for
-from opend_status import opend_state
-from period_widgets import DateRow
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.history_client import (  # noqa: E402
+    HOST,
+    LOGIN_PROMPT,
+    PORT,
+    OpenDSessionError,
+    looks_like_login_issue,
+    pull_history,
+)
+from core.kline_map import INTERVALS, csv_name, kltype_for  # noqa: E402
+from core.opend_status import opend_state  # noqa: E402
+from gui.period_widgets import DateRow  # noqa: E402
 
 POLL_MS = 2000
+SAVES = ROOT / "saves"
 
 
 class App(tk.Tk):
@@ -24,8 +37,12 @@ class App(tk.Tk):
         self.geometry("780x540")
         self.minsize(640, 460)
 
+        SAVES.mkdir(exist_ok=True)
+
         self.log_q: queue.Queue[str] = queue.Queue()
         self.busy = False
+        self.pull_locked = False
+        self.opend_ready = False
 
         self._build()
         self.after(120, self._drain_log)
@@ -80,7 +97,9 @@ class App(tk.Tk):
         actions.pack(fill=tk.X, **pad)
         self.pull_btn = ttk.Button(actions, text="Pull", command=self._start_pull)
         self.pull_btn.pack(side=tk.LEFT)
-        ttk.Label(actions, text=f"API host {HOST}:{PORT}").pack(side=tk.LEFT, padx=12)
+        ttk.Label(actions, text=f"API {HOST}:{PORT}   saves → {SAVES.name}/").pack(
+            side=tk.LEFT, padx=12
+        )
 
         log_frame = ttk.LabelFrame(self, text="Log status")
         log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 8))
@@ -94,18 +113,26 @@ class App(tk.Tk):
         self.status = tk.StringVar(value="Idle. Waiting for Pull.")
         ttk.Label(self, textvariable=self.status, anchor=tk.W).pack(fill=tk.X, padx=10, pady=(0, 8))
 
-        self._log("Ready. OpenD status updates every 2 seconds.")
+        self._log("Ready. CSVs go to saves/. Pull stays grey until OpenD is open.")
 
     def _set_dot(self, ready: bool) -> None:
         self.opend_dot.delete("all")
         color = "#2e7d32" if ready else "#c62828"
         self.opend_dot.create_oval(2, 2, 10, 10, fill=color, outline=color)
 
+    def _refresh_pull_button(self) -> None:
+        allow = self.opend_ready and not self.busy and not self.pull_locked
+        self.pull_btn.config(state=tk.NORMAL if allow else tk.DISABLED)
+
     def _poll_opend(self) -> None:
         ready, text = opend_state(HOST, PORT)
+        self.opend_ready = ready
         self._set_dot(ready)
-        self.opend_text.set(text)
-        self.pull_btn.config(state=tk.DISABLED if (self.busy or not ready) else tk.NORMAL)
+        if self.pull_locked:
+            self.opend_text.set("Pull locked after failure  •  restart app to try again")
+        else:
+            self.opend_text.set(text)
+        self._refresh_pull_button()
         self.after(POLL_MS, self._poll_opend)
 
     def _on_interval(self, _event=None) -> None:
@@ -136,12 +163,11 @@ class App(tk.Tk):
         self.after(120, self._drain_log)
 
     def _start_pull(self) -> None:
-        if self.busy:
+        if self.busy or self.pull_locked:
             return
-        ready, text = opend_state(HOST, PORT)
-        if not ready:
-            self.status.set(text)
-            self._log(f"Blocked: {text}")
+        if not self.opend_ready:
+            self.status.set("OpenD is not open. Pull is disabled.")
+            self._log("Blocked: OpenD.exe is not open")
             return
 
         code = self.symbol.get().strip().upper()
@@ -164,7 +190,7 @@ class App(tk.Tk):
             return
 
         self.busy = True
-        self.pull_btn.config(state=tk.DISABLED)
+        self._refresh_pull_button()
         self.status.set("Connecting to OpenD...")
         self._log(f"Pull start  {code}  {interval}  {start} -> {end}")
         threading.Thread(
@@ -173,17 +199,33 @@ class App(tk.Tk):
             daemon=True,
         ).start()
 
+    def _lock_after_failure(self, err: str) -> None:
+        self.pull_locked = True
+        self.busy = False
+        self._refresh_pull_button()
+        self.status.set("Failed. Pull locked. Restart the app after fixing OpenD / login.")
+        self._log(f"Failed (no retry): {err}")
+        self._log(LOGIN_PROMPT.replace("\n", " | "))
+        self.after(0, lambda: messagebox.showerror("OpenD / login", LOGIN_PROMPT + f"\n\n{err}"))
+
     def _pull_worker(self, code: str, interval: str, start: str, end: str, extended: bool) -> None:
         try:
             ktype = kltype_for(interval)
             self._log(f"KLType mapped to {ktype}")
-            out_path = Path(__file__).resolve().parent / csv_name(code, interval)
+            out_path = SAVES / csv_name(code, interval)
             n = pull_history(code, start, end, ktype, extended, out_path, self._log)
-            self.status.set(f"Done: {n} bars -> {out_path.name}" if n else "Done: 0 bars")
+            self.status.set(f"Done: {n} bars -> saves/{out_path.name}" if n else "Done: 0 bars")
+            self.busy = False
+        except OpenDSessionError as exc:
+            self._lock_after_failure(str(exc))
+            return
         except Exception as exc:
+            hint = str(exc)
+            if looks_like_login_issue(hint):
+                self._lock_after_failure(hint)
+                return
             self._log(f"Failed: {type(exc).__name__}: {exc}")
             self.status.set(f"Failed: {exc}")
-        finally:
             self.busy = False
 
 
