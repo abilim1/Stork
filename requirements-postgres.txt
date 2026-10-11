@@ -1,0 +1,2 @@
+# Optional: needed only for PostgreSQL storage and migration.
+psycopg[binary]>=3.3,<4

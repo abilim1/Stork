@@ -1,0 +1,21 @@
+# Example only: replace user and paths before installing on your Linux server.
+[Unit]
+Description=Stork private Micron dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stork
+WorkingDirectory=/opt/stork
+ExecStart=/opt/stork/.venv/bin/python -m stork.server --connect-live --data-dir /var/lib/stork --exports /opt/stork/saves
+Environment=PYTHONUNBUFFERED=1
+# Optional: a private environment file with STORK_CODEX_BIN, STORK_DATABASE_URL
+# and OpenD settings. Keep credentials out of this service file.
+EnvironmentFile=-/etc/stork/stork.env
+Restart=on-failure
+RestartSec=10
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

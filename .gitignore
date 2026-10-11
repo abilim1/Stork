@@ -7,3 +7,10 @@ __pycache__/
 # Moomoo / Futu local gateway client
 OpenDClient/
 **/OpenDClient/
+
+# Private web dashboard state and local credentials
+.stork/
+.env
+.env.*
+!.env.example
+test-artifacts/

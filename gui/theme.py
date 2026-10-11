@@ -81,6 +81,23 @@ def apply(root: tk.Tk) -> ttk.Style:
         indicatorcolor=CARD,
     )
     style.map("TCheckbutton", background=[("active", SURFACE)], foreground=[("active", TEXT)])
+    style.configure(
+        "Treeview",
+        background=LOG_BG,
+        fieldbackground=LOG_BG,
+        foreground=TEXT,
+        borderwidth=0,
+        rowheight=22,
+        font=UI_FONT_SM,
+    )
+    style.configure(
+        "Treeview.Heading",
+        background=SURFACE,
+        foreground=MUTED,
+        borderwidth=0,
+        font=UI_FONT_SM,
+    )
+    style.map("Treeview", background=[("selected", LINE)], foreground=[("selected", TEXT)])
     root.option_add("*TCombobox*Listbox.background", CARD)
     root.option_add("*TCombobox*Listbox.foreground", TEXT)
     root.option_add("*TCombobox*Listbox.selectBackground", LINE)

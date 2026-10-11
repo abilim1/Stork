@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stork — Micron, in focus</title>
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="Stork home"><span class="brand-mark">s</span>stork<span class="brand-dot">.</span></a>
+    <span class="nav-label">YOUR WORKSPACE</span>
+    <nav aria-label="Main navigation">
+      <a class="nav-item active" href="#overview" data-view="overview"><span>◫</span> Overview</a>
+      <a class="nav-item" href="#research" data-view="research"><span>⌕</span> Research <i id="report-count">0</i></a>
+      <a class="nav-item" href="#journal" data-view="journal"><span>▤</span> Position journal</a>
+      <a class="nav-item" href="#settings" data-view="settings"><span>⚙</span> Preferences</a>
+    </nav>
+    <div class="sidebar-bottom"><span class="avatar">M</span><div>Personal workspace<small id="workspace-stock">Micron Technology · NASDAQ</small></div></div>
+  </aside>
+
+  <main>
+    <header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash">/</span><span id="page-name">Overview</span></div><div class="topbar-right"><span id="clock"></span><button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">☀</button><button class="icon-button" id="alerts-button" title="View alerts" aria-label="View alerts"><svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="alert-count" class="notification-count" hidden></span></button></div></header>
+    <div class="content">
+      <div class="stock-tabs" role="group" aria-label="Choose a stock">
+        <button type="button" data-stock="US.MU" aria-pressed="true" class="stock-tab active"><span>Micron</span><small>MU</small></button>
+        <button type="button" data-stock="US.SNDK" aria-pressed="false" class="stock-tab"><span>SanDisk</span><small>SNDK</small></button>
+      </div>
+      <div id="connection-banner" class="banner" hidden></div>
+      <section class="view" id="overview-view">
+        <div class="page-heading"><div><div class="eyebrow">YOUR MARKET, IN FOCUS</div><h1><span id="stock-name">Micron overview</span><span class="heading-dot">.</span></h1><p>The price, the context, and what comes next.</p></div><div class="heading-actions"><span class="status-pill" id="feed-badge"><span class="small-dot"></span>Historical data</span><button class="button secondary" id="connect-button">Connect OpenD</button></div></div>
+        <div class="metrics">
+          <article class="metric-card"><div class="metric-label"><b id="stock-ticker">MU</b> <span>NASDAQ · USD</span></div><div class="metric-main" id="current-price">—</div><div class="metric-detail" id="price-change">Waiting for price data</div></article>
+          <article class="metric-card"><div class="metric-label">From regular open <span>SESSION</span></div><div class="metric-main smaller" id="open-change">—</div><div class="metric-detail" id="open-reference">Regular session has not started</div></article>
+          <article class="metric-card"><div class="metric-label">Latest week <span>REGULAR HOURS</span></div><div class="metric-main smaller" id="week-change">—</div><div class="metric-detail" id="week-reference">Versus preceding week's close</div></article>
+          <article class="metric-card"><div class="metric-label">Research <span>YOUR ANALYST</span></div><div class="metric-main smaller research-value" id="research-label">Ready when you are</div><div class="metric-detail" id="research-detail">Web research + market context</div></article>
+        </div>
+        <div class="overview-grid">
+          <section class="card chart-card">
+            <div class="card-heading"><div><h2>Price performance</h2><p id="chart-subtitle">MU · Micron Technology</p></div><div class="segmented" id="range-controls" aria-label="Displayed date range"><button data-range="1D">1D</button><button class="active" data-range="5D">5D</button><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="ALL">All</button></div></div>
+            <div class="chart-toolbar">
+              <label>Interval<select id="chart-interval"><option value="1m">1 minute</option><option value="5m">5 minutes</option><option value="15m" selected>15 minutes</option><option value="30m">30 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option><option value="1d">Daily</option></select></label>
+              <label>Style<select id="chart-style"><option value="line">Line</option><option value="area">Area</option><option value="candles">Candlesticks</option><option value="bars">OHLC bars</option></select></label>
+              <label>Session<select id="chart-session"><option value="all">All sessions</option><option value="regular">Regular hours</option><option value="premarket">Premarket</option><option value="afterhours">After-hours</option><option value="overnight">Overnight</option></select></label>
+              <button class="text-button" id="reset-chart">Reset view ↺</button>
+            </div>
+            <div class="chart-stage"><canvas id="price-chart" role="img" aria-label="Interactive MU price and volume chart. Use the table button for accessible candle data." tabindex="0"></canvas><div class="chart-tooltip" id="chart-tooltip" hidden></div><div class="chart-empty" id="chart-empty" hidden></div></div>
+            <div id="chart-warning" class="inline-note" hidden></div>
+            <div class="chart-footer"><span><i class="legend-dot"></i> <span id="price-legend">MU price</span> <i class="legend-dot volume"></i> Volume</span><span id="chart-asof">End-labelled candles · New York time</span><button class="text-button" id="chart-data-button" disabled>View data</button></div>
+          </section>
+          <aside class="card context-card"><div class="card-heading"><div><h2>Market context</h2><p>A wider view of the move</p></div><span class="tiny-label" id="context-feed-status" role="status">Not connected</span></div><div id="benchmarks" class="benchmark-list"></div><div class="context-note"><span>↗</span><p>Compare the stock with its sector and the broader market. Each quote shows its own session.</p></div><div class="context-bottom"><div class="tiny-label">LATEST UPDATE</div><p id="feed-time">No live feed connected</p><button class="text-button" id="feed-details-button">Connection details →</button></div></aside>
+        </div>
+        <div class="lower-grid">
+          <section class="card insight-card"><div class="card-heading"><div><span class="eyebrow">STORK RESEARCH</span><h2>A clearer view of the day</h2></div></div><div id="insight-preview"><p class="empty-description">Bring price action and the day's news together. Your reports keep intraday momentum and the longer-term outlook in view.</p></div><div class="card-actions"><button class="button primary run-research">Analyze now</button><a class="text-button" href="#research">Open research →</a></div></section>
+          <section class="card weekly-card"><div class="card-heading"><div><h2>Week by week</h2><p>Regular-session returns</p></div><span class="tiny-label">LAST 6 WEEKS</span></div><div id="weekly-chart"></div><div class="subtle-note">Returns compare the last observed regular price with the preceding week's last observed close. * Fewer than five full sessions: a holiday, missing data, or an unfinished week.</div><p class="subtle-note" id="friday-record"></p></section>
+        </div>
+        <footer class="page-footer"><span>STORK <span class="footer-dot">•</span> A considered view of the market.</span><span id="data-note">Source: your saved Moomoo data</span></footer>
+      </section>
+
+      <section class="view" id="research-view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">EVIDENCE BEFORE OPINION</div><h1><span id="research-heading">Micron research</span><span class="heading-dot">.</span></h1><p>Fresh sources. Clear reasoning. A record of what changed.</p></div><div class="research-actions"><button id="research-start" class="button primary run-research">Analyze now</button><div class="research-progress" id="research-progress" hidden><button class="button secondary" id="research-progress-toggle" aria-expanded="false" aria-controls="research-progress-panel">Researching…</button><section id="research-progress-panel" class="research-progress-panel" aria-label="Research activity" hidden><h2 id="research-progress-heading">Research activity</h2><p id="research-progress-stage"></p><dl id="research-progress-details"></dl><p id="research-progress-note" class="subtle-note"></p></section></div><button id="cancel-research" class="button secondary" hidden>Cancel research</button></div></div>
+        <div class="research-status-row"><div id="research-status" class="banner" role="status"></div><button id="latest-report" class="button secondary" hidden>View latest report</button></div>
+        <div class="research-layout"><aside class="card report-list" id="report-list"></aside><article class="card report-body" id="report-body"></article></div>
+        <section class="card archive-card"><div class="card-heading"><div><h2>Earlier news exports</h2><p>Archived keyword matches — not a current news feed</p></div><button id="load-archive" class="button secondary">Browse archive</button></div><div id="archive-news"></div></section>
+      </section>
+
+      <section class="view" id="journal-view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">KEEP YOUR INTENTION IN VIEW</div><h1><span id="journal-heading">Micron positions</span><span class="heading-dot">.</span></h1><p>Your original plan, and the reasons it changes.</p></div><button class="button primary" id="add-position">+ Record position</button></div>
+        <div class="banner neutral">A personal journal. Recording or closing a position here does not place a brokerage order.</div>
+        <div id="positions"></div>
+      </section>
+
+      <section class="view" id="settings-view" hidden>
+        <div class="page-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h1><span id="settings-heading">Micron preferences</span><span class="heading-dot">.</span></h1><p>These settings apply to the selected stock. Switch stocks to manage each schedule.</p></div></div>
+        <form id="settings-form" class="settings-grid">
+          <section class="card settings-card"><h2>Analysis schedule</h2><p>Independent of the chart interval. Uses your signed-in Codex subscription allowance.</p><label class="toggle-row"><span>Automatic research</span><input type="checkbox" name="analysis_enabled" role="switch"></label><div class="form-grid" id="schedule-fields"></div><label class="toggle-row"><span>Include overnight trading</span><input type="checkbox" name="overnight_enabled" role="switch"></label><p class="subtle-note">Scheduled runs require a healthy feed and an active exchange session. One report runs at a time.</p><button type="button" class="text-button" id="check-auth">Check ChatGPT connection →</button><p id="auth-result" class="subtle-note"></p></section>
+          <section class="card settings-card"><h2>Alerts & display</h2><p>Alerts appear in your dashboard. Optional browser notifications work while this page is open.</p><label>Display timezone<select name="timezone"><option value="America/New_York">New York (exchange time)</option><option value="Asia/Singapore">Singapore</option></select></label><div class="form-grid"><label>Price rises above ($)<input name="alert_above" type="number" min="0.01" step="0.01" placeholder="No upper alert"></label><label>Price falls below ($)<input name="alert_below" type="number" min="0.01" step="0.01" placeholder="No lower alert"></label></div><label class="toggle-row"><span>Notify when a report is ready</span><input name="notify_reports" type="checkbox" role="switch"></label><button type="button" class="button secondary" id="enable-notifications">Enable browser notifications</button><p class="subtle-note">External messaging delivery has not been configured.</p></section>
+          <section class="card settings-card full-width"><h2>Research priorities</h2><p>Editorial weights guide research attention. They are not forecast probabilities or measured causes of price movement.</p><div id="weight-fields" class="weight-grid"></div><div class="weight-total" id="weight-total">Total 100%</div></section>
+          <div class="settings-save"><span id="settings-feedback" role="status"></span><button class="button primary" type="submit">Save preferences</button></div>
+        </form>
+      </section>
+    </div>
+  </main>
+  <dialog id="modal"><div class="modal-heading"><h2 id="modal-title"></h2><button class="icon-button" id="close-modal" aria-label="Close dialog">×</button></div><div id="modal-content"></div></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>
